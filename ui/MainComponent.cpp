@@ -46,7 +46,7 @@ void MainComponent::paint (juce::Graphics& g)
     // Header text
     g.setColour (juce::Colours::white.withAlpha (0.85f));
     g.setFont (juce::FontOptions (18.0f));
-    g.drawText ("DJ Edit Lab — Phase 2: Audio Loading & Playback",
+    g.drawText ("DJ Edit Lab - Phase 2: Audio Loading & Playback",
                 getLocalBounds().removeFromTop (40),
                 juce::Justification::centred,
                 true);
