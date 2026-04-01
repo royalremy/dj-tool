@@ -1,5 +1,38 @@
 # CLAUDE.md
 
+---
+
+## 🔴 ANTIGRAVITY VERPLICHTE PRE-FLIGHT (LEES DIT EERST)
+
+> Deze sectie is specifiek voor de Antigravity chat-interface.
+> Vóór **elke** code-actie, bestandswijziging, of git-commando MOET je:
+
+### 1. Voer `/start-work` uit (workflow in `.agents/workflows/start-work.md`)
+
+Dit is **niet optioneel**. De workflow dwingt:
+- ✅ Git branch check (verbod op werken op `main`)
+- ✅ Staged/unstaged changes check
+- ✅ Vraagclassificatie (triviaal vs. architecturaal)
+- ✅ Domeinrouting naar de juiste specialist-regels
+- ✅ Vertical slice scope bewaking
+
+### 2. Lees het relevante agent-bestand
+
+Na routing, lees via `view_file` het betreffende `.claude/agents/[domein].md` bestand vóór je implementeert.
+
+### 3. Rapporteer altijd eerst
+
+```
+🌿 Branch:   [naam] | [clean / X changes]
+📋 Type:     triviaal / architecturaal
+🎯 Domein:   [agent(s)]
+📦 Scope:    in scope / ⚠️ buiten vertical slice
+```
+
+**Ga nooit direct aan de slag zonder dit overzicht te tonen.**
+
+---
+
 ## Project Context
 
 Dit project is een macOS audio applicatie gebouwd met:

@@ -21,6 +21,7 @@ Je bent een expert in het **non-destructief stem editing systeem** van DJ Edit L
 
 **Referentie Documenten:**
 - `CLAUDE.md` — globale regels
+- `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md` — **Fases 5–6 (Loop & Cut) zijn jouw domein**
 - `docs/dj_edit_lab_stem_editing_system_specification_v_1.md` — volledig document (anti-click, loops, gain, indexing, time-stretch)
 - `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — §9 Editing, §11 Stem Controle, §13 Undo/Redo
 
@@ -50,11 +51,12 @@ Je bent een expert in het **non-destructief stem editing systeem** van DJ Edit L
 - Crossfade op loop boundary
 - Conflict: loop overschrijft bestaande audio in regio
 
-### Conflict Rules (prioriteit)
+### Conflict Rules (prioriteit — FRD §9 & §11)
 ```
 Timeline edit > Stem matrix
 Cut na loop → cut wint
 Nieuwe edit overschrijft oude edit
+Loopoverschrijving: loop overschrijft bestaande audio in regio
 ```
 
 ---
@@ -219,9 +221,10 @@ void prepareToPlay(int samplesPerBlockExpected, double sampleRate) {
 
 ---
 
-## Undo/Redo
+## Undo/Redo (FRD §13)
 
-- 20 stappen maximum
-- Instelbaar
+- **Maximum: 20 stappen** (hard limit, instelbaar tot max 20)
 - Gebruik command pattern of ringbuffer
 - Edits zijn immutable na aanmaak (vervangen, niet muteren)
+- Undo/redo scope: alle non-destructieve bewerkingen (cuts, loops, stem matrix changes)
+- Audio thread raakt nooit de undo stack — beheer via UI thread

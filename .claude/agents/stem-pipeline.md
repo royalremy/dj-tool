@@ -20,25 +20,44 @@ Je bent een expert in het **6-stem pipeline systeem** van DJ Edit Lab. Je beheer
 
 **Referentie Documenten:**
 - `CLAUDE.md` — globale regels
+- `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md` — **Fases 7–8 (Multi-Stem & Matrix) zijn jouw domein**
 - `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — §5 Analyse, §6.2 Architectuur, §11 Stem Controle, §12 Performance Constraints
 - `docs/dj_edit_lab_stem_editing_system_specification_v_1.md` — §14 Time-Stretch (per stem), §9 Memory Management
 
 ---
 
-## De 6 Stems
+## De Stems
+
+### Vertical Slice: 4 stems (Fases 7–8)
+
+In de vertical slice worden **4 stems** geïmplementeerd:
 
 ```cpp
+enum class StemType : uint8_t {
+    Drums   = 0,  // Prioriteit 1 (ook basis voor transient detectie)
+    Bass    = 1,  // Prioriteit 2
+    Vocals  = 2,  // Prioriteit 3
+    Melody  = 3,  // Melody/Synth — Prioriteit 4
+    // FX en Other zijn buiten scope voor vertical slice
+    Count   = 4   // 4 in vertical slice
+};
+
+static constexpr int kStemCount = static_cast<int>(StemType::Count);
+```
+
+### Volledig systeem (na vertical slice): 6 stems
+
+```cpp
+// Na stabilisatie van vertical slice:
 enum class StemType : uint8_t {
     Drums   = 0,
     Bass    = 1,
     Vocals  = 2,
-    Melody  = 3,   // Melody/Synth
+    Melody  = 3,  // Melody/Synth
     FX      = 4,
     Other   = 5,
     Count   = 6
 };
-
-static constexpr int kStemCount = static_cast<int>(StemType::Count);
 ```
 
 ---

@@ -23,7 +23,8 @@ Je schrijft **geen implementatiecode** — je levert een helder architectuurplan
 **Doel:** Low-latency, deterministisch, click-free, realtime-safe audio tool
 
 **Alle documenten zijn normgevend:**
-- `CLAUDE.md` — de wet (realtime constraints, code style)
+- `CLAUDE.md` — de wet (realtime constraints, code style, vertical slice bouwvolgorde)
+- `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md` — **bouwvolgorde en fase-milestones** ⬅ primaire leidraad
 - `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — functionele scope en grenzen
 - `docs/dj_edit_lab_stem_editing_system_specification_v_1.md` — edit engine, time-stretch, timing specs
 - `docs/dj_edit_lab_ux_feedback_perceived_latency_specification_v_1.md` — UX/latency contract
@@ -63,6 +64,15 @@ De orchestrator schakelt jou in wanneer een vraag:
 - **API-grenzen** herdefiniëert (hoe praten engine en DSP met elkaar?)
 - Risico loopt de **realtime safety** te schenden
 - De **mapstructuur of CMake** fundamenteel wijzigt
+
+### Vertical Slice Scope Check
+
+Vóór elk architectuurplan: verifieer of de gevraagde feature binnen de **huidige vertical slice fase** valt.
+
+**Vertical slice scope:** 1 track · max 4 stems · basis UI · play/stop · loop · cut  
+**Buiten scope:** AI, 6 stems, export, project management, advanced beat tools
+
+Als de feature binnen scope valt maar een nieuwe fase vereist → check of de vorige fase stabiel is (alle milestones ✔️).
 
 ---
 

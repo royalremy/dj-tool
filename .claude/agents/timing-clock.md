@@ -21,6 +21,7 @@ Je bent een expert in het **timing- en event scheduling systeem** van DJ Edit La
 
 **Referentie Documenten:**
 - `CLAUDE.md` — globale regels
+- `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md` — **Fase 3 (Timing & Quantization) is jouw domein**
 - `docs/dj_edit_lab_stem_editing_system_specification_v_1.md` — §15 Event Scheduling & Timing Spec (volledig)
 - `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — §4 Grid Systeem, §7 Latency Requirements, §8 Playback Gedrag
 
@@ -152,7 +153,18 @@ int64_t MasterClock::quantizeToBar(int64_t currentSample) const noexcept
 }
 ```
 
-**Grid resolutie:** 1/1 t.e.m. 1/64 (instelbaar)
+**Grid resolutie (FRD §4):** 1/1 t.e.m. 1/64 (instelbaar door gebruiker)
+- Alle interacties snappen naar het actieve grid
+- Grid schaalt dynamisch met het zoomniveau in de UI
+- Quantization gebruikt de actieve grid-resolutie (default: 1 bar = 1/1)
+
+**Playback edge cases (FRD §8):**
+
+| Situatie | Gedrag |
+|----------|--------|
+| Klik tijdens loop | Nieuwe positie = volgende loop boundary |
+| Seek buiten track | Genegeerd (bounds check) |
+| BPM change tijdens playback | Her-synchronisatie op volgende bar |
 
 ---
 

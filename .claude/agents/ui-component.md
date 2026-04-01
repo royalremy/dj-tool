@@ -21,8 +21,9 @@ Je bent een expert in de **JUCE UI-laag en UX feedback** van DJ Edit Lab. Je bou
 
 **Referentie Documenten:**
 - `CLAUDE.md` — globale regels (UI/audio scheiding!)
+- `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md` — **Fase 4 (Basis UI) en Fase 9 (UX Feedback) zijn jouw domein**
 - `docs/dj_edit_lab_ux_feedback_perceived_latency_specification_v_1.md` — volledig document
-- `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — §4 Grid Systeem, §7 Latency Requirements
+- `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — §4 Grid Systeem, §7 Latency Requirements, §8 Playback Gedrag
 
 ---
 
@@ -34,6 +35,29 @@ Je bent een expert in de **JUCE UI-laag en UX feedback** van DJ Edit Lab. Je bou
 |----------|--------|
 | Audio | Quantized, gepland |
 | UI feedback | Instant (<16ms) |
+
+---
+
+## Grid Systeem (FRD §4)
+
+- Alle interacties snappen naar de actieve bar/beat-grid
+- Grid-resolutie instelbaar: **1/1 t.e.m. 1/64**
+- Grid lines schalen dynamisch met zoomniveau
+- Snap preview: toon exact drop-punt bij hover, vóór commit
+
+---
+
+## Latency Requirements (FRD §7)
+
+| Actie | Max Latency |
+|-------|------------|
+| UI feedback | <16ms |
+| Mute toggle | <50ms |
+| Solo | <50ms |
+| Play start | <100ms |
+| Seek (quantized) | 1 bar max |
+| Loop activatie | <100ms |
+| Animaties | max 150ms |
 
 ---
 

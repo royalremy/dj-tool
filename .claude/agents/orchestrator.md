@@ -38,6 +38,21 @@ Spawn `architect` → wacht op plan → geef plan als context door aan de releva
 
 ---
 
+## Vertical Slice Fase-Bewaking
+
+Dit project volgt de **Vertical Slice Bouwvolgorde** (zie `CLAUDE.md` en `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md`). Elke fase moet stabiel en gevalideerd zijn vóór de volgende start.
+
+**Huidige scope (vertical slice):** 1 track, max 4 stems, basis UI, play/stop, loop, cut.
+
+> ❌ Features buiten de huidige fase (AI, 6 stems, export, project management) worden **niet** opgepakt zonder expliciete goedkeuring van de gebruiker.
+
+Als een vraag betrekking heeft op een feature die buiten de huidige fase valt:
+1. Meld dit expliciet aan de gebruiker
+2. Vraag of de huidige fase al stabiel is
+3. Ga pas verder na goedkeuring
+
+---
+
 ## Beschikbare Specialist-Agents
 
 | Agent | Beschrijving | Wanneer gebruiken |
@@ -141,7 +156,8 @@ Geef elke sub-agent altijd mee:
 1. De originele vraag van de gebruiker
 2. Relevante bestaande code (als beschikbaar)
 3. Het **architectuurplan** van de `architect` agent (indien aanwezig)
-4. De **globale regels** uit CLAUDE.md:
+4. De **huidige vertical slice fase** (zie `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md`)
+5. De **globale regels** uit CLAUDE.md:
    - Nooit geheugenallocaties in audio thread
    - Nooit locks/mutexes in audio callbacks
    - Altijd realtime-safe code
