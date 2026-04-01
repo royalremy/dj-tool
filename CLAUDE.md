@@ -67,11 +67,9 @@ Focus:
 - Duidelijke naming
 - Geen magic numbers
 
-```
-
 ---
 
-## 8. Eerste Doel
+## Eerste Doel
 
 Zorg dat dit werkt:
 
