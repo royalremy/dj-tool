@@ -1,48 +1,32 @@
-# --- Compiled binaries & build artifacts ---
+# Build artifacts
 /build/
-/cmake-build-debug/
-/cmake-build-release/
-/out/
-*.exe
-*.out
-*.app
+/bin/
+/lib/
 *.o
-*.obj
+*.a
 *.so
 *.dylib
 *.dll
-*.lib
-*.a
+*.exe
 
-# --- CMake files ---
-CMakeFiles/
+# VS Code
+.vscode/
+.history/
+
+# macOS
+.DS_Store
+
+# JUCE generated
+JuceLibraryCode/
+
+# CMake
 CMakeCache.txt
+CMakeFiles/
 CMakeScripts/
 cmake_install.cmake
+install_manifest.txt
 Makefile
-/build/
-/_deps/
 
-# --- IDEs & Editor specific ---
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-
-# --- OS specific ---
-.DS_Store
-Thumbs.db
-.Spotlight-V100
-.Trashes
-
-# --- JUCE specific ---
-JuceLibraryCode/
-# Optional: It is common to keep JUCE in the root or in a 'third_party' folder. 
-# If you don't want to commit the JUCE library itself:
-# /JUCE/
-
-# --- Other ---
-.antigravity/
-.gemini/
-/tmp/
+# Submodules
+# (Don't ignore the submodule itself, but maybe its build artifacts)
+/third_party/JUCE/build/
