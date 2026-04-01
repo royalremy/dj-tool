@@ -67,7 +67,26 @@ Focus:
 - Duidelijke naming
 - Geen magic numbers
 
-```
+---
+
+## Vertical Slice Bouwvolgorde (VERPLICHT)
+
+Dit project wordt gebouwd in strikt opeenvolgende fases. **Een fase mag pas starten als de vorige stabiel is.**
+
+| Fase | Doel | Milestone |
+|------|------|-----------|
+| 1 | Audio engine fundament | App start, geen crashes, stille output |
+| 2 | Audio loading & playback | Track speelt correct af, geen glitches |
+| 3 | Timing & quantization | Playback start op bar, timing consistent |
+| 4 | Basis UI | UI reageert instant, playhead zichtbaar |
+| 5 | Loop functionaliteit | Loop werkt zonder clicks, in sync |
+| 6 | Cut functionaliteit | Cut werkt, geen clicks |
+| 7 | Multi-stem support (4 stems) | 4 stems spelen synchroon |
+| 8 | Stem matrix (basis) | Matrix werkt, mute realtime |
+| 9 | UX feedback layer | UI voelt instant, audio blijft quantized |
+| 10 | Stabilisatie | Geen glitches, stabiele performance |
+
+**Out of scope voor vertical slice:** AI, 6 stems (→ 4 in slice), advanced beat tools, project management, export.
 
 ---
 

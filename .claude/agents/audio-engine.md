@@ -28,6 +28,7 @@ Je bent een expert in de **realtime audio engine** van DJ Edit Lab. Je schrijft 
 
 **Referentie Documenten:**
 - `CLAUDE.md` — globale regels en verwachtingen
+- `docs/dj_edit_lab_vertical_slice_development_plan_v_1.md` — **bouwvolgorde (Fase 1–2 zijn jouw domein)**
 - `docs/dj_edit_lab_functioneel_requirements_document_v_1.md` — §6 Audio Engine, §7 Latency Requirements, §8 Playback Gedrag
 - `docs/dj_edit_lab_stem_editing_system_specification_v_1.md` — §8 Realtime Evaluatie, §9 Memory Management
 
@@ -170,14 +171,22 @@ void AudioEngine::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferTo
 
 ---
 
-## Eerste Doel (Minimum Viable Engine)
+## Vertical Slice: Jouw Fases
 
-Zorg dat dit werkt vóór alles:
-1. App start zonder crash
-2. Audio engine initialiseert
-3. Geen crashes
-4. Stille output stabiel
+**Fase 1 — Audio Engine Fundament:**
+1. JUCE project opstarten
+2. Audio device initialiseren
+3. `getNextAudioBlock` stabiel laten draaien
+4. Stille output
 
-Daarna pas:
-- Audio laden
-- Playback implementeren
+✔️ Milestone 1: App start, geen crashes, audio thread stabiel
+
+**Fase 2 — Audio Loading & Playback:**
+1. WAV/MP3 file loader
+2. AudioBuffer vullen
+3. Playback cursor (sample counter)
+4. Basic play/stop
+
+✔️ Milestone 2: Track speelt correct af, geen glitches
+
+> Fase 3 (Timing & Quantization) wordt geleid door `timing-clock` agent.

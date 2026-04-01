@@ -1,161 +1,253 @@
-# DJ Edit Lab — Project Setup & CLAUDE.md
+# DJ Edit Lab — Functioneel & UX Requirements Document v1.2 (Complete)
 
-## 1. Doel
+## 1. Overzicht
 
-Concrete setup om onmiddellijk te starten met ontwikkeling:
-- JUCE + C++ audio engine
-- CMake build
-- VS Code + Claude Code workflow
+DJ Edit Lab is een remix-tool voor DJ’s die hun sets voorbereiden. De applicatie is bedoeld om tracks creatief te herwerken tot speelklare edits.
 
----
-
-## 2. Folder Structuur
-
-```
-DJEditLab/
- ├── CMakeLists.txt
- ├── /app
- │    ├── main.cpp
- │
- ├── /engine
- │    ├── AudioEngine.h
- │    ├── AudioEngine.cpp
- │
- ├── /dsp
- │    ├── EditSystem.h
- │    ├── EditSystem.cpp
- │
- ├── /ui
- │    ├── MainComponent.h
- │    ├── MainComponent.cpp
- │
- ├── /third_party
- │
- ├── /build
-```
+Focus:
+- Realtime preview
+- Creatieve controle per stem en per sectie
+- Snelle, intuïtieve workflow
 
 ---
 
-## 3. CMake Setup (basis)
+## 2. Workflow Model
 
-```
-cmake_minimum_required(VERSION 3.15)
-project(DJEditLab)
+States:
+- Imported
+- Analysed
+- Edited
+- Exported
 
-set(CMAKE_CXX_STANDARD 17)
-
-add_subdirectory(JUCE)
-
-juce_add_gui_app(DJEditLab
-    PRODUCT_NAME "DJ Edit Lab"
-)
-
-juce_generate_juce_header(DJEditLab)
-
-target_sources(DJEditLab PRIVATE
-    app/main.cpp
-    engine/AudioEngine.cpp
-    dsp/EditSystem.cpp
-    ui/MainComponent.cpp
-)
-
-target_link_libraries(DJEditLab PRIVATE
-    juce::juce_audio_utils
-    juce::juce_dsp
-)
-```
+Vrije navigatie tussen states.
 
 ---
 
-## 4. Basic Audio Engine Skeleton
+## 3. Globale Regels
 
-### AudioEngine.h
-
-```
-#pragma once
-#include <JuceHeader.h>
-
-class AudioEngine : public juce::AudioAppComponent
-{
-public:
-    AudioEngine();
-    ~AudioEngine() override;
-
-    void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
-    void getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill) override;
-    void releaseResources() override;
-
-private:
-    double currentSampleRate = 44100.0;
-};
-```
-
-### AudioEngine.cpp
-
-```
-#include "AudioEngine.h"
-
-AudioEngine::AudioEngine()
-{
-    setAudioChannels (0, 2);
-}
-
-AudioEngine::~AudioEngine()
-{
-    shutdownAudio();
-}
-
-void AudioEngine::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
-{
-    currentSampleRate = sampleRate;
-}
-
-void AudioEngine::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
-{
-    bufferToFill.clearActiveBufferRegion();
-}
-
-void AudioEngine::releaseResources()
-{
-}
-```
+- Alle bewerkingen zijn non-destructief
+- Laatste bewerking wint
+- Realtime performance heeft prioriteit
 
 ---
 
-## 5. Main UI Component
+## 4. Grid Systeem
 
-### MainComponent.h
-
-```
-#pragma once
-#include <JuceHeader.h>
-#include "../engine/AudioEngine.h"
-
-class MainComponent : public juce::Component
-{
-public:
-    MainComponent();
-    ~MainComponent() override;
-
-    void paint (juce::Graphics&) override;
-    void resized() override;
-
-private:
-    AudioEngine audioEngine;
-};
-```
+- Bar/beat grid als basis
+- Resolutie: 1/1 → 1/64
+- Alles snapt naar grid
 
 ---
 
-## 6. VS Code Setup
+## 5. Analyse
 
-Installeer:
-- CMake Tools
-- C/C++ Extension
+- BPM detectie
+- Toonaard detectie
+- Sectie detectie
+- 6 stems
 
-Configureer:
-- Compiler: Apple Clang
-- Build folder: /build
+### Transients
+
+- Alleen drums
+
+### Correctie UX
+
+- Tap tempo
+- Secties hernoemen
+- Secties splitsen/mergen
+- Vrije labels mogelijk
+
+---
+
+## 6. Structuur (Secties)
+
+Secties zijn tijdsreferenties (intro, drop, etc.)
+
+### Functionaliteit
+
+- Drag & drop reorder
+- Dupliceren
+- Knippen
+- Samenvoegen
+- Splitsen
+- Nieuwe sectie maken
+
+---
+
+## 7. Stem x Sectie Matrix
+
+Core interface:
+
+Grid:
+- Rijen = stems
+- Kolommen = secties
+
+Per cel:
+- Mute toggle
+- Volume controle
+
+### Interacties
+
+- Multi-select (shift/cmd)
+- Visuele status (actief/inactief)
+
+---
+
+## 8. Timeline Editing
+
+### Selectie
+
+- Click & drag
+- Min lengte: 1 beat
+- Mag over meerdere secties lopen
+
+### Acties
+
+- Cut
+- Loop
+- Gain
+
+Action buttons verschijnen bij selectie
+
+---
+
+## 9. Editing Gedrag
+
+### Cut
+
+- Verwijdert audio
+- Vervangt door stilte
+- Geen verschuiving
+
+### Loop
+
+- Snapt aan grid
+- Auto-correct indien fout
+
+---
+
+## 10. Beat Tools
+
+- Auto quantize (instelbaar)
+- Beat locking
+- Multi-beat selectie
+- Swing
+- Humanize
+
+---
+
+## 11. Playback UX
+
+- Quantized playback
+- Loop preview toggle
+- Snap-to-bar gedrag zichtbaar
+
+---
+
+## 12. Project Management
+
+### Structuur
+
+/project
+- original/
+- stems/
+- project.json
+
+### Functionaliteit
+
+- Autosave (5 min)
+- Recent projects
+- Rename
+- Duplicate
+- Delete
+
+---
+
+## 13. Export
+
+- WAV / MP3
+- Bitrate selectie
+- Sample rate selectie
+- Progress indicator
+- Show in Finder
+
+---
+
+## 14. Keyboard Shortcuts
+
+- Play/Pause
+- Undo/Redo
+- Loop toggle
+- Mute/Solo
+- Zoom
+
+---
+
+## 15. Performance Constraints
+
+- 8GB RAM
+- 10 min tracks
+- Max 6 stems
+
+---
+
+## 16. Error Handling
+
+- Stem fail → fallback
+- BPM onzeker → user confirm
+- Corrupt file → reject
+
+---
+
+## 17. Non-Functional
+
+- Import: WAV, MP3, FLAC
+- Export: WAV, MP3
+- Autosave verplicht
+- Crash safety
+- Keyboard-first usability
+
+---
+
+## 18. Belangrijke Opmerking over andere documenten
+
+Ja — de andere documenten moeten gedeeltelijk geüpdatet worden:
+
+### Moet aangepast worden:
+
+1. **UX Spec**
+- Matrix interacties toevoegen
+- Section editing feedback
+
+2. **Editing System Spec**
+- Moet expliciet rekening houden met:
+  - section-based overrides
+  - matrix vs timeline conflicts
+
+3. **Timing Spec**
+- Moet rekening houden met:
+  - section reorder events
+  - loop preview UX
+
+### Moet NIET aangepast worden:
+
+- Time-stretch spec (blijft correct)
+- Audio core architectuur (blijft correct)
+
+---
+
+## 19. Samenvatting
+
+Dit document herstelt:
+
+- Volledige UX
+- Alle user-facing features
+- Project lifecycle
+
+En behoudt:
+
+- Technische correctheid
+- Performance focus
 
 ---
 
