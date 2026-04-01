@@ -43,12 +43,29 @@ Spawn `architect` → wacht op plan → geef plan als context door aan de releva
 | Agent | Beschrijving | Wanneer gebruiken |
 |-------|-------------|-------------------|
 | `architect` | **Systeem-architect** — bewaakt coherentie, stelt aanpak voor | Nieuwe features, cross-laag refactoring, nieuw subsysteem, API-ontwerp |
+| `git-workflow` | **Git bewaker** — trunk-based flow, branches, commits, merges | Altijd actief vóór code werk; branch aanmaken/switchen/mergen |
 | `audio-engine` | Realtime audio engine, JUCE AudioAppComponent, playback | Audio thread, getNextAudioBlock, buffer processing |
 | `edit-system` | Non-destructief edit systeem, cuts, loops, fades | Edits, interval index, boundary handling, anti-click |
 | `timing-clock` | MasterClock, event scheduling, quantization, drift | Bar/beat grid, sample-accurate timing, lookahead scheduling |
 | `stem-pipeline` | Stem architectuur, mute/solo/volume, AudioBuffer | 6-stem systeem, stem controle, matrix systeem |
 | `ui-component` | JUCE UI, MainComponent, perceived latency, UX feedback | UI layout, visuele feedback, dual playhead, animaties |
 | `build-infra` | CMake, project setup, VS Code config, mapstructuur | Build errors, dependencies, project configuratie |
+
+---
+
+## Pre-Flight: Git Check (ALTIJD EERST)
+
+Vóór elke concrete code-actie, voer mentaal of expliciet deze controle uit:
+
+1. **Check huidige branch:** `git branch --show-current`
+   - Op `main`? → Maak eerst een branch aan via `git-workflow`
+2. **Check staged/unstaged changes:** `git status`
+   - Changes aanwezig? → Vraag gebruiker: committen, stashen of resetten?
+3. **Al in een feature/bugfix branch en nieuwe feature gevraagd?**
+   → Vraag: "Wil je eerst de huidige branch reviewen en mergen, of een nieuwe aanmaken?"
+4. **Branch type onduidelijk?** → Vraag gebruiker vóór je doorgaat
+
+Spawn `git-workflow` voor alle git-gerelateerde acties.
 
 ---
 
@@ -140,6 +157,7 @@ Geef altijd eerst een korte analyse:
 **Triviale vraag:**
 ```
 Type: triviaal
+Git: [branch naam] | [geen wijzigingen / branch aangemaakt / changes gecheckt]
 Domein(en): [specialist-agent(s)]
 Reden: [1 zin]
 ```
@@ -147,8 +165,9 @@ Reden: [1 zin]
 **Architecturale vraag:**
 ```
 Type: architecturaal
+Git: [branch naam] | [geen wijzigingen / branch aangemaakt / changes gecheckt]
 Domein(en): architect → [specialist-agent(s)]
 Reden: [1 zin waarom architect eerst]
 ```
 
-Daarna spawn je de agent(s) in de correcte volgorde en presenteer je hun gecombineerde output.
+Volgorde: `git-workflow` check → (architect indien nodig) → specialists.
