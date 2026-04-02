@@ -102,6 +102,29 @@ Focus:
 
 ---
 
+## ⚠️ JUCE String Safety (KRITIEKE REGEL)
+
+**Gebruik NOOIT non-ASCII karakters in string literals die aan `juce::String` worden meegegeven.**
+
+Dit omvat: em dash `—`, smart quotes `"" ''`, checkmark `✔`, en alle andere Unicode > 127.
+
+JUCE's `juce_String.cpp` heeft een `jassert` die crashes veroorzaakt bij non-ASCII bytes.
+
+```cpp
+// ❌ VERBODEN — veroorzaakt jassert crash in juce_String.cpp:327
+g.drawText ("DJ Edit Lab — Phase 3", ...);
+g.drawText ("Status: ✔ OK", ...);
+
+// ✅ CORRECT — alleen ASCII
+g.drawText ("DJ Edit Lab - Phase 3", ...);
+g.drawText ("Status: OK", ...);
+```
+
+**Dit geldt voor:** `drawText()`, `Label::setText()`, `Button::setButtonText()`, en alle andere JUCE string APIs.
+
+---
+
+
 ## Eerste Doel
 
 Zorg dat dit werkt:
