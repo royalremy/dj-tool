@@ -87,7 +87,7 @@ void MainComponent::paint (juce::Graphics& g)
     // Header
     g.setColour (juce::Colours::white.withAlpha (0.9f));
     g.setFont (juce::FontOptions (18.0f));
-    g.drawText ("DJ Edit Lab  —  Phase 3: Timing & Quantization",
+    g.drawText ("DJ Edit Lab - Phase 3: Timing & Quantization",
                 getLocalBounds().removeFromTop (44),
                 juce::Justification::centred, true);
 
