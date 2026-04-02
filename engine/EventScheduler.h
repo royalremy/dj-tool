@@ -68,8 +68,13 @@ public:
                             int            maxResults) noexcept;
 
 private:
+    // UI -> Audio thread lock-free queue
     juce::AbstractFifo           fifo_;
     std::array<AudioEvent, kFifoSize> storage_;
 
     std::atomic<AudioEvent::ID> nextId_ { 0 };
+
+    // Audio thread internal future-event buffer
+    std::array<AudioEvent, kFifoSize> localQueue_;
+    int localQueueSize_ { 0 };
 };

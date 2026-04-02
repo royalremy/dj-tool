@@ -155,8 +155,12 @@ void AudioEngine::stopPlayback()
 //==============================================================================
 void AudioEngine::setBPM (double bpm) noexcept
 {
-    bpm_.store (bpm);
-    masterClock_.setBPM (bpm);
+    AudioEvent ev;
+    ev.type = AudioEvent::Type::BPMChange;
+    ev.data.newBPM = bpm;
+    // Dispatched directly to start next buffer window
+    ev.scheduledSample = playheadSamples.load() + 1; // apply almost immediately
+    scheduler_.scheduleEvent (ev);
 }
 
 //==============================================================================
