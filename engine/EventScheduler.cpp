@@ -61,16 +61,15 @@ int EventScheduler::popEventsForBuffer (int64_t     bufferStart,
     {
         const AudioEvent& ev = localQueue_[i];
 
-        if (ev.scheduledSample >= bufferStart && ev.scheduledSample < bufferEnd)
+        if (ev.scheduledSample < bufferEnd)
         {
-            // Belongs to this buffer window
+            // Belongs to this buffer window OR is a past event -> process now
             if (collected < maxResults)
                 result[collected++] = ev;
-            // (extra events beyond maxResults are silently discarded)
         }
         else
         {
-            // Future event (or stray past event) — keep in local queue
+            // Future event — keep in local queue
             localQueue_[writeIdx++] = ev;
         }
     }
