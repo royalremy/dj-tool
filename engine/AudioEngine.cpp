@@ -3,13 +3,11 @@
 //==============================================================================
 AudioEngine::AudioEngine()
 {
-    // Register all standard audio formats (WAV, AIFF, MP3, OGG, FLAC, …)
     formatManager.registerBasicFormats();
 }
 
 AudioEngine::~AudioEngine()
 {
-    // Must stop transport before shutdown to avoid use-after-free on audio thread
     transportSource.stop();
     transportSource.setSource (nullptr);
     shutdownAudio();
@@ -18,30 +16,85 @@ AudioEngine::~AudioEngine()
 //==============================================================================
 void AudioEngine::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    // Cache sample rate for UI queries (lock-free)
     currentSampleRate.store (sampleRate);
 
-    // AudioTransportSource handles its own internal buffering and resampling.
-    // No allocation happens here beyond what JUCE pre-allocates internally.
+    // Initialise MasterClock with the confirmed system sample rate.
+    masterClock_.setSampleRate (sampleRate);
+    masterClock_.setBPM (bpm_.load());
+
     transportSource.prepareToPlay (samplesPerBlockExpected, sampleRate);
 }
 
 void AudioEngine::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    // 1. Clear buffer — always the first step in the realtime callback
+    // 1. Clear buffer — always first
     bufferToFill.clearActiveBufferRegion();
 
     if (!fileLoaded.load())
         return;
 
-    // 2. Fill buffer via AudioTransportSource (internally lock-free, no allocations)
-    transportSource.getNextAudioBlock (bufferToFill);
+    // 2. Determine the sample range covered by this buffer.
+    //    We track the playhead as an absolute sample counter driven by the
+    //    AudioTransportSource position (avoids our own drift).
+    const double sampleRate     = currentSampleRate.load();
+    const int64_t bufferStart   = static_cast<int64_t> (
+        transportSource.getCurrentPosition() * sampleRate);
+    const int      bufferSize   = bufferToFill.numSamples;
 
-    // 3. Update playhead position (atomic write — read by UI for visualisation)
-    //    getCurrentPosition() is a simple atomic read inside JUCE, safe here.
-    playheadSamples.store (
-        static_cast<int64_t> (transportSource.getCurrentPosition()
-                              * currentSampleRate.load()));
+    // 3. Pop any events scheduled within [bufferStart, bufferStart + bufferSize).
+    static constexpr int kMaxEventsPerBuffer = 16;
+    AudioEvent events[kMaxEventsPerBuffer];
+    const int eventCount = scheduler_.popEventsForBuffer (
+        bufferStart, bufferSize, events, kMaxEventsPerBuffer);
+
+    // 4. Fill audio.
+    //    If there are no intra-buffer events, just fill the whole block.
+    //    If there are events, split the buffer at each event boundary.
+    if (eventCount == 0)
+    {
+        transportSource.getNextAudioBlock (bufferToFill);
+    }
+    else
+    {
+        int processedSamples = 0;
+
+        for (int e = 0; e < eventCount; ++e)
+        {
+            const AudioEvent& ev      = events[e];
+            const int splitPoint      = static_cast<int> (ev.scheduledSample - bufferStart);
+            const int samplesToRender = splitPoint - processedSamples;
+
+            // Render the segment before this event
+            if (samplesToRender > 0)
+            {
+                juce::AudioSourceChannelInfo segment (bufferToFill);
+                segment.startSample += processedSamples;
+                segment.numSamples   = samplesToRender;
+                transportSource.getNextAudioBlock (segment);
+                processedSamples += samplesToRender;
+            }
+
+            // Apply the event
+            applyEvent (ev);
+        }
+
+        // Render remaining samples after last event
+        const int remaining = bufferSize - processedSamples;
+        if (remaining > 0)
+        {
+            juce::AudioSourceChannelInfo segment (bufferToFill);
+            segment.startSample += processedSamples;
+            segment.numSamples   = remaining;
+            transportSource.getNextAudioBlock (segment);
+        }
+    }
+
+    // 5. Update playhead and musical position atomics (read by UI thread)
+    const int64_t newPlayhead = static_cast<int64_t> (
+        transportSource.getCurrentPosition() * sampleRate);
+    playheadSamples.store (newPlayhead);
+    currentBar .store (masterClock_.sampleToBar (newPlayhead));
+    currentBeat.store (masterClock_.sampleToBeatInBar (newPlayhead));
 }
 
 void AudioEngine::releaseResources()
@@ -52,48 +105,91 @@ void AudioEngine::releaseResources()
 //==============================================================================
 bool AudioEngine::loadFile (const juce::File& file)
 {
-    // MUST run on the message thread — createReaderFor performs disk I/O.
     jassert (juce::MessageManager::existsAndIsCurrentThread());
 
-    // Create a format reader for the file
     auto* reader = formatManager.createReaderFor (file);
     if (reader == nullptr)
         return false;
 
-    // Hand reader to a new AudioFormatReaderSource (takes ownership)
     auto newSource = std::make_unique<juce::AudioFormatReaderSource> (reader, true);
 
-    // Tell transport source about the new input.
-    // The second arg (true) tells it to take ownership.
     transportSource.setSource (
         newSource.get(),
-        0,                      // readAheadBufferSize (0 = sync read, simpler for Phase 2)
-        nullptr,                // backgroundThread (none needed for sync read)
-        reader->sampleRate,     // source sample rate
-        2);                     // max output channels
+        0,
+        nullptr,
+        reader->sampleRate,
+        2);
 
-    // Cache total length for UI progress bar / waveform
     totalSamples.store (reader->lengthInSamples);
-
-    // Keep the source alive (transport source holds a raw ptr, we hold the owner)
     readerSource = std::move (newSource);
-
-    // Signal audio thread that a file is ready (lock-free)
     fileLoaded.store (true);
-
-    // Reset playhead to start
     transportSource.setPosition (0.0);
 
     return true;
 }
 
 //==============================================================================
-void AudioEngine::startPlayback()
+void AudioEngine::scheduledPlay()
 {
-    transportSource.start();
+    // Compute the current playhead in samples to find the next bar boundary.
+    const double  sampleRate   = currentSampleRate.load();
+    const int64_t currentSmp   = static_cast<int64_t> (
+        transportSource.getCurrentPosition() * sampleRate);
+
+    const int64_t targetSample = masterClock_.quantizeToBar (currentSmp);
+
+    AudioEvent ev;
+    ev.type            = AudioEvent::Type::Play;
+    ev.scheduledSample = targetSample;
+    ev.quantized       = true;
+
+    scheduler_.scheduleEvent (ev);
 }
 
 void AudioEngine::stopPlayback()
 {
+    // Stop is immediate — no quantization required.
     transportSource.stop();
+}
+
+//==============================================================================
+void AudioEngine::setBPM (double bpm) noexcept
+{
+    bpm_.store (bpm);
+    masterClock_.setBPM (bpm);
+}
+
+//==============================================================================
+// Private — audio thread only
+void AudioEngine::applyEvent (const AudioEvent& event) noexcept
+{
+    switch (event.type)
+    {
+        case AudioEvent::Type::Play:
+            transportSource.start();
+            break;
+
+        case AudioEvent::Type::Stop:
+            transportSource.stop();
+            break;
+
+        case AudioEvent::Type::Seek:
+        {
+            const double targetSeconds = static_cast<double> (event.data.seekTarget)
+                                         / currentSampleRate.load();
+            // NOTE: setPosition is not strictly realtime-safe in all JUCE versions;
+            // for Phase 3 this is acceptable. Phase 5+ should use a dedicated seek
+            // ring buffer with pre-loaded read-ahead.
+            transportSource.setPosition (targetSeconds);
+            break;
+        }
+
+        case AudioEvent::Type::BPMChange:
+            masterClock_.setBPM (event.data.newBPM);
+            bpm_.store (event.data.newBPM);
+            break;
+
+        default:
+            break;
+    }
 }
