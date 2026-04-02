@@ -64,8 +64,10 @@ MainComponent::MainComponent()
 
     // ── Audio device: 0 inputs, 2 outputs ─────────────────────────────────────
     audioEngine.setAudioChannels (0, 2);
+    
+    addAndMakeVisible (timeline);
 
-    setSize (700, 240);
+    setSize (700, 340);
 }
 
 MainComponent::~MainComponent()
@@ -107,6 +109,10 @@ void MainComponent::resized()
     positionLabel.setBounds (infoRow.removeFromRight (280));
     statusLabel  .setBounds (infoRow);
     area.removeFromTop (8);
+
+    // ── Timeline row ──────────────────────────────────────────────────────────
+    timeline.setBounds (area.removeFromTop (100));
+    area.removeFromTop (16);
 
     // ── BPM row ───────────────────────────────────────────────────────────────
     auto bpmRow = area.removeFromTop (30);
@@ -156,6 +162,8 @@ void MainComponent::timerCallback()
         formatTime (currentSec) + " / " + formatTime (totalSec)
         + "  |  Bar " + juce::String (bar) + "  Beat " + juce::String (beat),
         juce::dontSendNotification);
+
+    timeline.setPosition (audioEngine.getPlayheadSamples(), audioEngine.getTotalSamples());
 }
 
 //==============================================================================
@@ -178,6 +186,7 @@ void MainComponent::loadFileButtonClicked()
         const bool loaded = audioEngine.loadFile (chosenFile);
         if (loaded)
         {
+            timeline.setFile (chosenFile);
             loadedFileName = chosenFile.getFileName();
             statusLabel.setText (
                 "Loaded: " + loadedFileName

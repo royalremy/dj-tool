@@ -2,6 +2,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../engine/AudioEngine.h"
+#include "TimelineComponent.h"
 
 //==============================================================================
 /**
@@ -54,6 +55,8 @@ private:
 
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::String loadedFileName;
+
+    TimelineComponent timeline;
 
     //==========================================================================
     static constexpr int    kUiTimerHz  = 30;
