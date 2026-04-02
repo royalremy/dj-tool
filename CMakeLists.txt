@@ -29,6 +29,7 @@ target_sources(DJEditLab PRIVATE
     engine/EventScheduler.cpp
     dsp/EditSystem.cpp
     ui/MainComponent.cpp
+    ui/TimelineComponent.cpp
 )
 
 # Include directories
