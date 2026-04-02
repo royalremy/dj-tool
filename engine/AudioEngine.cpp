@@ -23,6 +23,7 @@ void AudioEngine::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
     masterClock_.setBPM (bpm_.load());
 
     transportSource.prepareToPlay (samplesPerBlockExpected, sampleRate);
+    engineSampleTime.store (0);
 }
 
 void AudioEngine::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferToFill)
@@ -33,12 +34,9 @@ void AudioEngine::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferT
     if (!fileLoaded.load())
         return;
 
-    // 2. Determine the sample range covered by this buffer.
-    //    We track the playhead as an absolute sample counter driven by the
-    //    AudioTransportSource position (avoids our own drift).
+    // 2. Determine the sample range covered by this buffer on the Master timeline.
     const double sampleRate     = currentSampleRate.load();
-    const int64_t bufferStart   = static_cast<int64_t> (
-        transportSource.getCurrentPosition() * sampleRate);
+    const int64_t bufferStart   = engineSampleTime.load();
     const int      bufferSize   = bufferToFill.numSamples;
 
     // 3. Pop any events scheduled within [bufferStart, bufferStart + bufferSize).
@@ -89,7 +87,10 @@ void AudioEngine::getNextAudioBlock (const juce::AudioSourceChannelInfo& bufferT
         }
     }
 
-    // 5. Update playhead and musical position atomics (read by UI thread)
+    // 5. Update engine master timeline
+    engineSampleTime.fetch_add (bufferSize);
+
+    // 6. Update playhead and musical position atomics (read by UI thread)
     const int64_t newPlayhead = static_cast<int64_t> (
         transportSource.getCurrentPosition() * sampleRate);
     playheadSamples.store (newPlayhead);
@@ -131,12 +132,9 @@ bool AudioEngine::loadFile (const juce::File& file)
 //==============================================================================
 void AudioEngine::scheduledPlay()
 {
-    // Compute the current playhead in samples to find the next bar boundary.
-    const double  sampleRate   = currentSampleRate.load();
-    const int64_t currentSmp   = static_cast<int64_t> (
-        transportSource.getCurrentPosition() * sampleRate);
-
-    const int64_t targetSample = masterClock_.quantizeToBar (currentSmp);
+    // Compute next bar boundary based on the absolute engine timeline!
+    const int64_t currentEngineSmp = engineSampleTime.load();
+    const int64_t targetSample     = masterClock_.quantizeToBar (currentEngineSmp);
 
     AudioEvent ev;
     ev.type            = AudioEvent::Type::Play;
@@ -148,15 +146,22 @@ void AudioEngine::scheduledPlay()
 
 void AudioEngine::stopPlayback()
 {
-    // Stop is immediate — no quantization required.
-    transportSource.stop();
+    // Stop is immediate on the timeline — no quantization required.
+    AudioEvent ev;
+    ev.type = AudioEvent::Type::Stop;
+    ev.scheduledSample = engineSampleTime.load() + 1;
+    scheduler_.scheduleEvent (ev);
 }
 
 //==============================================================================
 void AudioEngine::setBPM (double bpm) noexcept
 {
-    bpm_.store (bpm);
-    masterClock_.setBPM (bpm);
+    AudioEvent ev;
+    ev.type = AudioEvent::Type::BPMChange;
+    ev.data.newBPM = bpm;
+    // Dispatch effectively immediately on the timeline
+    ev.scheduledSample = engineSampleTime.load() + 1;
+    scheduler_.scheduleEvent (ev);
 }
 
 //==============================================================================

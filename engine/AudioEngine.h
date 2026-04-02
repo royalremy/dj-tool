@@ -109,6 +109,7 @@ private:
     // Lock-free state shared between audio thread and UI thread
     std::atomic<bool>    fileLoaded       { false };
     std::atomic<int64_t> playheadSamples  { 0 };
+    std::atomic<int64_t> engineSampleTime { 0 };
     std::atomic<int64_t> totalSamples     { 0 };
     std::atomic<double>  currentSampleRate { 44100.0 };
     std::atomic<double>  bpm_             { 120.0 };

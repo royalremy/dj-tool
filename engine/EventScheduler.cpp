@@ -33,54 +33,47 @@ int EventScheduler::popEventsForBuffer (int64_t     bufferStart,
                                         AudioEvent* result,
                                         int         maxResults) noexcept
 {
-    // Peek at everything in the FIFO without committing a read yet.
-    // We only consume events that belong to the current buffer window.
-    const int available = fifo_.getNumReady();
-    if (available == 0 || maxResults == 0)
+    // We drain the entire lock-free FIFO and merge it into our local thread queue
+    {
+        const int available = fifo_.getNumReady();
+        if (available > 0)
+        {
+            const auto readScope = fifo_.read (available);
+
+            for (int i = 0; i < readScope.blockSize1 && localQueueSize_ < kFifoSize; ++i)
+                localQueue_[localQueueSize_++] = storage_[static_cast<size_t> (readScope.startIndex1 + i)];
+
+            for (int i = 0; i < readScope.blockSize2 && localQueueSize_ < kFifoSize; ++i)
+                localQueue_[localQueueSize_++] = storage_[static_cast<size_t> (readScope.startIndex2 + i)];
+        }
+    }
+
+    if (localQueueSize_ == 0 || maxResults == 0)
         return 0;
 
     const int64_t bufferEnd = bufferStart + static_cast<int64_t> (bufferSize);
     int collected = 0;
 
-    // We need to iterate the ring buffer to find matching events.
-    // Use AbstractFifo::read() in a peek-style loop:
-    //   - Read one at a time; put back events that don't belong to this buffer.
-    // Because AbstractFifo doesn't support peek-and-requeue natively, we drain
-    // all available events into a small temporary stack buffer, return those that
-    // match, and re-schedule the rest.
-    //
-    // Stack limit: kFifoSize entries — no heap allocation.
-    AudioEvent tempBuffer[kFifoSize];
-    int tempCount = 0;
-
-    {
-        const auto readScope = fifo_.read (available);
-
-        for (int i = 0; i < readScope.blockSize1 && tempCount < kFifoSize; ++i)
-            tempBuffer[tempCount++] = storage_[static_cast<size_t> (readScope.startIndex1 + i)];
-
-        for (int i = 0; i < readScope.blockSize2 && tempCount < kFifoSize; ++i)
-            tempBuffer[tempCount++] = storage_[static_cast<size_t> (readScope.startIndex2 + i)];
-    }
-
     // Partition: events for this buffer vs events for a later buffer
-    for (int i = 0; i < tempCount; ++i)
+    // Keep events that belong in the future around in the localQueue_
+    int writeIdx = 0;
+    for (int i = 0; i < localQueueSize_; ++i)
     {
-        const AudioEvent& ev = tempBuffer[i];
+        const AudioEvent& ev = localQueue_[i];
 
-        if (ev.scheduledSample >= bufferStart && ev.scheduledSample < bufferEnd)
+        if (ev.scheduledSample < bufferEnd)
         {
-            // Belongs to this buffer window
+            // Belongs to this buffer window OR is a past event -> process now
             if (collected < maxResults)
                 result[collected++] = ev;
-            // (extra events beyond maxResults are silently discarded — shouldn't happen)
         }
         else
         {
-            // Belongs to a future buffer — put it back
-            scheduleEvent (ev);
+            // Future event — keep in local queue
+            localQueue_[writeIdx++] = ev;
         }
     }
+    localQueueSize_ = writeIdx;
 
     // Sort results by (scheduledSample, priority) so the audio thread can split
     // buffers in order without extra bookkeeping.
