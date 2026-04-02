@@ -201,7 +201,7 @@ void MainComponent::playButtonClicked()
     // Update the status to show pending state
     statusLabel.setText (
         "Loaded: " + loadedFileName
-        + "  (BPM: " + juce::String (audioEngine.getBPM(), 1) + ")  — starting on next bar…",
+        + "  (BPM: " + juce::String (audioEngine.getBPM(), 1) + ")  - starting on next bar...",
         juce::dontSendNotification);
 }
 
