@@ -25,6 +25,8 @@ juce_generate_juce_header(DJEditLab)
 target_sources(DJEditLab PRIVATE
     app/main.cpp
     engine/AudioEngine.cpp
+    engine/MasterClock.cpp
+    engine/EventScheduler.cpp
     dsp/EditSystem.cpp
     ui/MainComponent.cpp
 )

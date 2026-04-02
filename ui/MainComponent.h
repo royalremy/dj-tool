@@ -5,51 +5,61 @@
 
 //==============================================================================
 /**
-    Main UI — Phase 2: Audio Loading & Playback.
+    Main UI — Phase 3: Timing & Quantization.
 
     Provides:
     - "Load File" button  → opens native file chooser, loads WAV/MP3
-    - "Play / Stop" button → starts/stops AudioTransportSource
-    - Status label         → shows filename + playback state
+    - "Play" button       → starts quantized playback (next bar boundary)
+    - "Stop" button       → stops playback immediately
+    - BPM slider          → adjusts master clock BPM [60–200]
+    - Status label        → shows filename + BPM
+    - Position label      → shows mm:ss + Bar:Beat position
 */
 class MainComponent : public juce::Component,
                       public juce::Timer
 {
 public:
-    //==============================================================================
+    //==========================================================================
     MainComponent();
     ~MainComponent() override;
 
-    //==============================================================================
-    void paint (juce::Graphics& g) override;
+    //==========================================================================
+    void paint  (juce::Graphics& g) override;
     void resized() override;
 
 private:
-    //==============================================================================
-    // Timer callback — polls playhead from audio thread for UI updates
+    //==========================================================================
+    // Timer — polls audio engine for UI updates (30 fps)
     void timerCallback() override;
 
-    //==============================================================================
+    //==========================================================================
     // UI helpers
     void loadFileButtonClicked();
-    void playStopButtonClicked();
-    void updatePlayStopButton();
+    void playButtonClicked();
+    void stopButtonClicked();
+    void bpmSliderChanged();
 
-    //==============================================================================
+    //==========================================================================
     AudioEngine audioEngine;
 
-    juce::TextButton loadFileButton  { "Load File" };
-    juce::TextButton playStopButton  { "Play" };
+    juce::TextButton loadFileButton { "Load File" };
+    juce::TextButton playButton     { "Play (quantized)" };
+    juce::TextButton stopButton     { "Stop" };
+
+    juce::Slider     bpmSlider;
+    juce::Label      bpmLabel;
+
     juce::Label      statusLabel;
     juce::Label      positionLabel;
 
-    // Owned here; shared_ptr not needed — chooser outlives callback on message thread
     std::unique_ptr<juce::FileChooser> fileChooser;
-
     juce::String loadedFileName;
 
-    //==============================================================================
-    static constexpr int kUiTimerHz = 30;   // 30 fps UI refresh
+    //==========================================================================
+    static constexpr int    kUiTimerHz  = 30;
+    static constexpr double kBpmMin     = 60.0;
+    static constexpr double kBpmMax     = 200.0;
+    static constexpr double kBpmDefault = 120.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
