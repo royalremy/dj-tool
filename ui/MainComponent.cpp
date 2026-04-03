@@ -37,6 +37,22 @@ MainComponent::MainComponent()
     stopButton.setColour (juce::TextButton::textColourOffId, juce::Colours::white);
     addAndMakeVisible (stopButton);
 
+    // ── Loop buttons ──────────────────────────────────────────────────────────
+    loop4Button.setEnabled(false);
+    loop4Button.onClick = [this] { loop4ButtonClicked(); };
+    loop4Button.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a4b8a));
+    addAndMakeVisible(loop4Button);
+
+    loop8Button.setEnabled(false);
+    loop8Button.onClick = [this] { loop8ButtonClicked(); };
+    loop8Button.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff1a4b8a));
+    addAndMakeVisible(loop8Button);
+
+    clearLoopButton.setEnabled(false);
+    clearLoopButton.onClick = [this] { clearLoopButtonClicked(); };
+    clearLoopButton.setColour (juce::TextButton::buttonColourId, juce::Colour (0xff4a5b6a));
+    addAndMakeVisible(clearLoopButton);
+
     // ── BPM slider ────────────────────────────────────────────────────────────
     bpmSlider.setRange (kBpmMin, kBpmMax, 0.5);
     bpmSlider.setValue (kBpmDefault, juce::dontSendNotification);
@@ -128,6 +144,12 @@ void MainComponent::resized()
     playButton    .setBounds (buttonRow.removeFromLeft (160).reduced (0, 4));
     buttonRow.removeFromLeft (10);
     stopButton    .setBounds (buttonRow.removeFromLeft (80) .reduced (0, 4));
+    buttonRow.removeFromLeft (10);
+    loop4Button   .setBounds (buttonRow.removeFromLeft (90) .reduced (0, 8));
+    buttonRow.removeFromLeft (5);
+    loop8Button   .setBounds (buttonRow.removeFromLeft (90) .reduced (0, 8));
+    buttonRow.removeFromLeft (5);
+    clearLoopButton.setBounds (buttonRow.removeFromLeft (90).reduced (0, 8));
 }
 
 //==============================================================================
@@ -138,6 +160,9 @@ void MainComponent::timerCallback()
 
     playButton.setEnabled (fileLoaded && !playing);
     stopButton.setEnabled (playing);
+    loop4Button.setEnabled (fileLoaded);
+    loop8Button.setEnabled (fileLoaded);
+    clearLoopButton.setEnabled (fileLoaded && audioEngine.isLoopActive());
 
     if (!fileLoaded)
         return;
@@ -164,6 +189,7 @@ void MainComponent::timerCallback()
         juce::dontSendNotification);
 
     timeline.setPosition (audioEngine.getPlayheadSamples(), audioEngine.getTotalSamples());
+    timeline.setLoopRegion (audioEngine.getLoopStart(), audioEngine.getLoopLength(), audioEngine.isLoopActive());
 }
 
 //==============================================================================
@@ -231,4 +257,19 @@ void MainComponent::bpmSliderChanged()
             + "  (BPM: " + juce::String (newBPM, 1) + ")",
             juce::dontSendNotification);
     }
+}
+
+void MainComponent::loop4ButtonClicked()
+{
+    audioEngine.setLoop(4);
+}
+
+void MainComponent::loop8ButtonClicked()
+{
+    audioEngine.setLoop(8);
+}
+
+void MainComponent::clearLoopButtonClicked()
+{
+    audioEngine.clearLoop();
 }

@@ -39,6 +39,9 @@ private:
     void playButtonClicked();
     void stopButtonClicked();
     void bpmSliderChanged();
+    void loop4ButtonClicked();
+    void loop8ButtonClicked();
+    void clearLoopButtonClicked();
 
     //==========================================================================
     AudioEngine audioEngine;
@@ -46,6 +49,10 @@ private:
     juce::TextButton loadFileButton { "Load File" };
     juce::TextButton playButton     { "Play (quantized)" };
     juce::TextButton stopButton     { "Stop" };
+
+    juce::TextButton loop4Button    { "Loop 4 Bars" };
+    juce::TextButton loop8Button    { "Loop 8 Bars" };
+    juce::TextButton clearLoopButton{ "Clear Loop" };
 
     juce::Slider     bpmSlider;
     juce::Label      bpmLabel;

@@ -22,6 +22,8 @@ struct AudioEvent
         Stop,        ///< Stop playback at scheduledSample
         Seek,        ///< Jump playhead to data.seekTarget
         BPMChange,   ///< Change BPM to data.newBPM (re-syncs grid on next bar)
+        SetLoop,     ///< Define and activate a loop region
+        ClearLoop,   ///< Deactivate the current loop
     };
 
     /** Unique monotonic ID — assigned by EventScheduler. */
@@ -45,6 +47,11 @@ struct AudioEvent
     {
         double  newBPM;       ///< valid for BPMChange
         int64_t seekTarget;   ///< valid for Seek (absolute sample)
+        
+        struct {
+            int64_t startSample;
+            int64_t lengthSamples;
+        } loopArgs;           ///< valid for SetLoop
 
         Data() : seekTarget (0) {}
     } data;
@@ -58,8 +65,10 @@ struct AudioEvent
         {
             case Type::Stop:      return 0;
             case Type::Seek:      return 1;
-            case Type::BPMChange: return 2;
-            case Type::Play:      return 3;
+            case Type::ClearLoop: return 2;
+            case Type::SetLoop:   return 3;
+            case Type::BPMChange: return 4;
+            case Type::Play:      return 5;
             default:              return 99;
         }
     }

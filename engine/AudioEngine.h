@@ -4,6 +4,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 #include "MasterClock.h"
 #include "EventScheduler.h"
+#include "../dsp/EditSystem.h"
 
 #include <atomic>
 #include <memory>
@@ -60,6 +61,15 @@ public:
     bool loadFile (const juce::File& file);
 
     //==========================================================================
+    // Loop control — safe to call from the message thread
+
+    /** Enables a loop of numBars length starting from the next bar. */
+    void setLoop(int numBars);
+
+    /** Clears the current loop. */
+    void clearLoop();
+
+    //==========================================================================
     // Clock / timing — message thread setters
 
     /** Set the BPM [20–300]. Updates MasterClock immediately. */
@@ -71,8 +81,12 @@ public:
     //==========================================================================
     // State queries (lock-free reads, safe from any thread)
 
-    bool    isPlaying()        const noexcept { return transportSource.isPlaying(); }
+    bool    isPlaying()        const noexcept { return isPlaying_.load(); }
     bool    isFileLoaded()     const noexcept { return fileLoaded.load(); }
+    
+    bool    isLoopActive()     const noexcept { return loopActive.load(); }
+    int64_t getLoopStart()     const noexcept { return loopStartSamples.load(); }
+    int64_t getLoopLength()    const noexcept { return loopLengthSamples.load(); }
 
     /** Current playhead in samples (written by audio thread). */
     int64_t getPlayheadSamples() const noexcept { return playheadSamples.load(); }
@@ -93,17 +107,25 @@ private:
     //==========================================================================
     // Audio-thread helpers (noexcept, no allocations, called from getNextAudioBlock)
     void applyEvent (const AudioEvent& event) noexcept;
+    void renderNextBlockWithLoops (const juce::AudioSourceChannelInfo& segment) noexcept;
+    void readFromMemory (juce::AudioSourceChannelInfo& segment, int64_t startSampleInFile) noexcept;
 
     //==========================================================================
     // File loading (message thread only)
     juce::AudioFormatManager                   formatManager;
-    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-    juce::AudioTransportSource                 transportSource;
+    juce::AudioBuffer<float>                   memoryBuffer;
+    std::atomic<bool>                          isPlaying_ { false };
 
     //==========================================================================
     // Timing subsystem
     MasterClock    masterClock_;
     EventScheduler scheduler_;
+
+    //==========================================================================
+    // Edit System (DSP phase 5)
+    dsp::EditIndex editIndex_;
+    juce::AudioBuffer<float> crossfadeTailBuffer_;
+    int crossfadeRemaining_ { 0 };
 
     //==========================================================================
     // Lock-free state shared between audio thread and UI thread
@@ -115,6 +137,10 @@ private:
     std::atomic<double>  bpm_             { 120.0 };
     std::atomic<int64_t> currentBar       { 0 };
     std::atomic<int>     currentBeat      { 0 };
+
+    std::atomic<bool>    loopActive       { false };
+    std::atomic<int64_t> loopStartSamples { 0 };
+    std::atomic<int64_t> loopLengthSamples{ 0 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioEngine)
 };

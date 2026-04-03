@@ -1,9 +1,2 @@
 #include "EditSystem.h"
-
-EditSystem::EditSystem()
-{
-}
-
-EditSystem::~EditSystem()
-{
-}
+// Implementation is inline in EditSystem.h for lock-free realtime safety

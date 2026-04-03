@@ -16,6 +16,7 @@ public:
 
     void setFile(const juce::File& file);
     void setPosition(int64_t playheadSamples, int64_t totalSamples);
+    void setLoopRegion(int64_t loopStartSamples, int64_t loopLengthSamples, bool isLoopActive);
 
 private:
     juce::AudioFormatManager formatManager;
@@ -24,6 +25,10 @@ private:
 
     int64_t currentPlayheadSamples { 0 };
     int64_t currentTotalSamples { 0 };
+    
+    int64_t loopStartSamples_ { 0 };
+    int64_t loopLengthSamples_ { 0 };
+    bool loopActive_ { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimelineComponent)
 };

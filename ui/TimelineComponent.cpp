@@ -28,6 +28,17 @@ void TimelineComponent::setPosition(int64_t playheadSamples, int64_t totalSample
     }
 }
 
+void TimelineComponent::setLoopRegion(int64_t loopStartSamples, int64_t loopLengthSamples, bool isLoopActive)
+{
+    if (loopStartSamples_ != loopStartSamples || loopLengthSamples_ != loopLengthSamples || loopActive_ != isLoopActive)
+    {
+        loopStartSamples_ = loopStartSamples;
+        loopLengthSamples_ = loopLengthSamples;
+        loopActive_ = isLoopActive;
+        repaint();
+    }
+}
+
 void TimelineComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
     if (source == &thumbnail)
@@ -54,6 +65,23 @@ void TimelineComponent::paint(juce::Graphics& g)
         g.setColour(juce::Colours::grey);
         g.setFont(14.0f);
         g.drawText("No audio loaded", bounds, juce::Justification::centred, false);
+    }
+    
+    // Draw loop region
+    if (loopActive_ && currentTotalSamples > 0)
+    {
+        double startProp = static_cast<double>(loopStartSamples_) / currentTotalSamples;
+        double endProp   = static_cast<double>(loopStartSamples_ + loopLengthSamples_) / currentTotalSamples;
+        
+        int startX = static_cast<int>(startProp * bounds.getWidth());
+        int endX   = static_cast<int>(endProp * bounds.getWidth());
+        
+        g.setColour (juce::Colours::cyan.withAlpha (0.25f));
+        g.fillRect (startX, 0, endX - startX, bounds.getHeight());
+        
+        g.setColour (juce::Colours::cyan);
+        g.drawVerticalLine (startX, 0.0f, static_cast<float>(bounds.getHeight()));
+        g.drawVerticalLine (endX, 0.0f, static_cast<float>(bounds.getHeight()));
     }
 
     // Playhead
